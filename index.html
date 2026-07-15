@@ -166,6 +166,25 @@
   }
   .toast.show{opacity:1}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+  /* ---------- Landscape tablet: split-screen POS ---------- */
+  @media (min-width: 820px){
+    body{
+      max-width:none; padding-bottom:0; height:100vh; overflow:hidden;
+      display:grid; grid-template-columns:1fr 400px; grid-template-rows:auto auto 1fr;
+    }
+    header{grid-column:1; grid-row:1; position:static}
+    nav{grid-column:1; grid-row:2; position:static}
+    #menuGrid{grid-column:1; grid-row:3; overflow-y:auto; align-content:start;
+      grid-template-columns:repeat(3,1fr); padding:16px}
+    #histWrap{grid-column:1; grid-row:3; overflow-y:auto}
+    #paybar{display:none}
+    /* checkout becomes a fixed right panel, always visible */
+    #overlay{display:flex !important; position:static; grid-column:2; grid-row:1/4;
+      background:var(--ink); align-items:stretch; overflow:hidden}
+    #sheet{max-height:none; height:100%; padding:14px; overflow-y:auto}
+    .ticket{border-radius:10px}
+    #cancelBtn{display:none}
+  }
 </style>
 </head>
 <body>
@@ -306,7 +325,7 @@ function renderMenu(){
       const a = e.target.dataset.a;
       if(a==='plus' || !a) cart[it.name]=(cart[it.name]||0)+1;
       if(a==='minus'){ cart[it.name]--; if(cart[it.name]<=0) delete cart[it.name]; }
-      renderMenu(); renderPaybar();
+      renderMenu(); renderPaybar(); renderTicket();
     });
     grid.appendChild(d);
   });
@@ -352,7 +371,8 @@ function renderTicket(){
     const it = MENU.find(m=>m.name===n);
     return `<div class="row"><span>${n} ×${q}</span><span>${num(it.price*q)}</span></div>`;
   }).join('');
-  document.getElementById('ticketLines').innerHTML = lines;
+  document.getElementById('ticketLines').innerHTML = lines ||
+    `<div class="row" style="color:var(--muted)"><span>Belum ada item — tap menu</span><span></span></div>`;
   const pb = document.getElementById('promoBtn');
   pb.style.display = cartCount() >= 2 ? 'block' : 'none';
   pb.classList.toggle('on', promoOn);
@@ -393,6 +413,7 @@ function cashValue(){ return parseInt((cashIn.value+'').replace(/\D/g,'')) || 0;
 function updateChange(){
   const out = document.getElementById('changeOut');
   const btn = document.getElementById('confirmBtn');
+  if(cartCount()===0){ out.textContent='—'; out.className=''; btn.disabled=true; return; }
   if(payMethod==='QRIS'){ btn.disabled = false; return; }
   const diff = cashValue() - cartTotal();
   if(!cashIn.value){ out.textContent='—'; out.className=''; btn.disabled=true; }
@@ -424,7 +445,8 @@ document.getElementById('confirmBtn').addEventListener('click', ()=>{
   printSale(sale);
   syncSale(sale);
 
-  cart = {}; renderMenu(); renderPaybar(); renderHeader();
+  cart = {}; promoOn = false; cashIn.value = '';
+  renderMenu(); renderPaybar(); renderTicket(); renderHeader();
   overlay.classList.remove('show');
   toast('Tersimpan ✓ Struk dikirim ke printer');
 });
@@ -581,7 +603,7 @@ function toast(msg){
 }
 
 /* ---------- init ---------- */
-renderMenu(); renderPaybar(); renderHeader(); retryQueue();
+renderMenu(); renderPaybar(); renderHeader(); renderTicket(); retryQueue();
 </script>
 </body>
 </html>
