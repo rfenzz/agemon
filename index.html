@@ -175,22 +175,24 @@
   }
   .toast.show{opacity:1}
   @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
-  /* ---------- Landscape tablet: split-screen POS ---------- */
+  /* ---------- Landscape tablet: split-screen POS ----------
+     Menu = normal page scroll. Panel = position:fixed right.
+     No body grid, no 100vh lock — nothing exotic. */
   @media (min-width: 820px){
-    body{
-      max-width:none; padding-bottom:0; height:100vh; overflow:hidden;
-      display:grid; grid-template-columns:1fr 400px; grid-template-rows:auto auto minmax(0,1fr);
-    }
-    header{grid-column:1; grid-row:1; position:static}
-    nav{grid-column:1; grid-row:2; position:static}
-    #menuGrid{grid-column:1; grid-row:3; overflow-y:auto; min-height:0; align-content:start;
-      grid-template-columns:repeat(3,1fr); padding:16px}
-    #histWrap{grid-column:1; grid-row:3; overflow-y:auto; min-height:0}
+    body{max-width:none; margin:0 420px 0 0; padding-bottom:40px}
+    #menuGrid{grid-template-columns:repeat(3,1fr); padding:16px}
     #paybar{display:none}
-    /* checkout becomes a fixed right panel, always visible */
-    #overlay{display:flex !important; position:static; grid-column:2; grid-row:1/4;
-      background:var(--ink); align-items:stretch; overflow:hidden}
-    #sheet{max-height:none; height:100%; padding:14px; overflow-y:auto}
+    #overlay{
+      display:flex !important;
+      position:fixed; top:0; right:0; bottom:0; left:auto;
+      width:420px; background:var(--ink);
+      align-items:stretch; justify-content:stretch;
+    }
+    #sheet{
+      width:100%; max-width:none; max-height:none;
+      height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch;
+      padding:12px 14px 24px;
+    }
     .ticket{border-radius:10px}
     #cancelBtn{display:none}
   }
