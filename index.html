@@ -158,6 +158,15 @@
   .summary .big{font-size:22px; font-weight:800}
   .ghostbtn{width:100%; height:44px; border-radius:12px; border:2px dashed var(--muted); background:none; font:700 13px 'Plus Jakarta Sans'; color:var(--muted); cursor:pointer; margin-top:6px}
   .empty{text-align:center; color:var(--muted); font-weight:700; padding:40px 0}
+  /* tab views — controlled by a body class, never inline styles */
+  .view-hist #menuGrid{display:none}
+  .view-hist #histWrap{display:block}
+  .view-hist #paybar{display:none}
+  .clearbtn{
+    width:100%; margin-top:8px; padding:10px 0; background:none; border:0;
+    color:var(--muted); font:700 12px 'Plus Jakarta Sans'; cursor:pointer;
+    text-decoration:underline; text-underline-offset:3px;
+  }
   .toast{
     position:fixed; left:50%; transform:translateX(-50%); bottom:110px; z-index:60;
     background:var(--ink); color:#fff; padding:12px 18px; border-radius:12px;
@@ -170,13 +179,13 @@
   @media (min-width: 820px){
     body{
       max-width:none; padding-bottom:0; height:100vh; overflow:hidden;
-      display:grid; grid-template-columns:1fr 400px; grid-template-rows:auto auto 1fr;
+      display:grid; grid-template-columns:1fr 400px; grid-template-rows:auto auto minmax(0,1fr);
     }
     header{grid-column:1; grid-row:1; position:static}
     nav{grid-column:1; grid-row:2; position:static}
-    #menuGrid{grid-column:1; grid-row:3; overflow-y:auto; align-content:start;
+    #menuGrid{grid-column:1; grid-row:3; overflow-y:auto; min-height:0; align-content:start;
       grid-template-columns:repeat(3,1fr); padding:16px}
-    #histWrap{grid-column:1; grid-row:3; overflow-y:auto}
+    #histWrap{grid-column:1; grid-row:3; overflow-y:auto; min-height:0}
     #paybar{display:none}
     /* checkout becomes a fixed right panel, always visible */
     #overlay{display:flex !important; position:static; grid-column:2; grid-row:1/4;
@@ -233,6 +242,7 @@
         <div class="row" style="margin-top:8px"><span>Kembalian</span><span id="changeOut">—</span></div>
       </div>
       <button id="confirmBtn">BAYAR &amp; CETAK STRUK</button>
+      <button id="clearBtn" class="clearbtn">🗑 Kosongkan pesanan</button>
     </div>
     <button id="cancelBtn">✕ Batal</button>
   </div>
@@ -381,6 +391,7 @@ function renderTicket(){
   document.getElementById('discountRow').style.display = d ? 'flex' : 'none';
   document.getElementById('discountOut').textContent = '−' + num(d);
   document.getElementById('ticketTotal').textContent = num(cartTotal());
+  document.getElementById('clearBtn').style.display = cartCount() ? 'block' : 'none';
   updateChange();
 }
 
@@ -388,6 +399,13 @@ document.getElementById('promoBtn').addEventListener('click', ()=>{
   promoOn = !promoOn;
   if(promoOn) toast('Cek dulu: customer sudah post + tag + follow @agemon.id?');
   renderTicket();
+});
+
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  cart = {}; promoOn = false; cashIn.value = '';
+  renderMenu(); renderPaybar(); renderTicket();
+  overlay.classList.remove('show');
+  toast('Pesanan dikosongkan');
 });
 document.getElementById('cancelBtn').addEventListener('click', ()=> overlay.classList.remove('show'));
 
@@ -590,9 +608,9 @@ function renderHeader(){
 }
 const tabK = document.getElementById('tabKasir'), tabR = document.getElementById('tabRiwayat');
 tabK.addEventListener('click', ()=>{ tabK.classList.add('on'); tabR.classList.remove('on');
-  grid.style.display='grid'; histWrap.style.display='none'; document.getElementById('paybar').style.display='block'; });
+  document.body.classList.remove('view-hist'); });
 tabR.addEventListener('click', ()=>{ tabR.classList.add('on'); tabK.classList.remove('on');
-  grid.style.display='none'; histWrap.style.display='block'; document.getElementById('paybar').style.display='none';
+  document.body.classList.add('view-hist');
   renderHistory(); });
 
 /* ---------- toast ---------- */
