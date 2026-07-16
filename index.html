@@ -277,9 +277,9 @@ const STORE = {
   footer  : 'Pembayaran tanpa STRUK = GRATIS',
 };
 
-/* ---- Supabase (opsional, v2) — biarkan kosong dulu ---- */
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
+/* ---- Supabase sync (aktif) ---- */
+const SUPABASE_URL = 'https://qtfpldyezlxjvlzfzqgn.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_o3V_ykWtZ5oSCG_gN68-iQ_iLQe3Apl';
 
 /* ---------- safe storage (works even where localStorage fails) ---------- */
 const mem = {};
@@ -535,6 +535,7 @@ async function syncSale(sale){
 function retryQueue(){
   (store.get(todayKey())||[]).filter(s=>!s.synced).forEach(syncSale);
 }
+window.addEventListener('online', retryQueue);
 
 /* ---------- history tab ---------- */
 const histWrap = document.getElementById('histWrap');
