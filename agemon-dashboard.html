@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#171314">
+<title>AGE.MON · Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#EF3B36; --ink:#171314; --panel:#221D1E; --panel2:#2B2526;
+    --paper:#FFFBF2; --line:#3A3233; --muted:#9C938B; --green:#4CC581;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    background:var(--ink); color:var(--paper);
+    max-width:520px; margin:0 auto; min-height:100vh;
+    padding-bottom:calc(30px + env(safe-area-inset-bottom));
+  }
+  .mono{font-family:'Space Mono',monospace}
+  /* ---------- login ---------- */
+  #loginView{display:flex; flex-direction:column; justify-content:center; min-height:92vh; padding:28px}
+  .logo{font-weight:800; font-style:italic; font-size:34px; letter-spacing:.5px}
+  .logo small{display:block; font-style:normal; font-size:11px; letter-spacing:4px; color:var(--muted); margin-top:2px}
+  #loginView form{margin-top:34px; display:flex; flex-direction:column; gap:12px}
+  #loginView input{
+    height:52px; border-radius:12px; border:2px solid var(--line); background:var(--panel);
+    color:var(--paper); padding:0 16px; font:600 15px 'Plus Jakarta Sans';
+  }
+  #loginView input:focus{outline:none; border-color:var(--red)}
+  #loginBtn{
+    height:54px; border:0; border-radius:12px; background:var(--red); color:#fff;
+    font:800 15px 'Plus Jakarta Sans'; letter-spacing:.5px; cursor:pointer; margin-top:6px;
+  }
+  #loginBtn:disabled{opacity:.5}
+  #loginErr{color:var(--red); font-weight:700; font-size:13px; min-height:18px}
+  /* ---------- dashboard ---------- */
+  #dashView{display:none; padding:0 16px}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:18px 0 6px}
+  .topbar .logo{font-size:20px}
+  #logoutBtn{background:none; border:1px solid var(--line); color:var(--muted);
+    border-radius:9px; padding:7px 12px; font:700 11px 'Plus Jakarta Sans'; cursor:pointer}
+  .datenav{display:flex; align-items:center; justify-content:space-between; margin:10px 0 16px}
+  .datenav button{
+    width:42px; height:42px; border-radius:10px; border:1px solid var(--line);
+    background:var(--panel); color:var(--paper); font-size:18px; cursor:pointer;
+  }
+  .datenav button:disabled{opacity:.3}
+  #dateLabel{font-weight:800; font-size:15px; text-align:center}
+  #dateLabel small{display:block; color:var(--muted); font-weight:700; font-size:11px; letter-spacing:1px}
+  .hero{
+    background:var(--red); border-radius:18px; padding:20px; margin-bottom:12px;
+    box-shadow:0 10px 30px rgba(239,59,54,.25);
+  }
+  .hero small{font-size:11px; font-weight:800; letter-spacing:2px; opacity:.85}
+  .hero .big{font-size:34px; font-weight:700; margin-top:4px}
+  .hero .sub{margin-top:6px; font-weight:700; font-size:13px; opacity:.9}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px}
+  .card small{font-size:10px; font-weight:800; letter-spacing:2px; color:var(--muted)}
+  .card .v{font-size:19px; font-weight:700; margin-top:4px}
+  .section{margin:18px 0 8px; font-weight:800; font-size:12px; letter-spacing:2px; color:var(--muted)}
+  .flavrow{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dashed var(--line)}
+  .flavrow .name{flex:1; font-weight:700; font-size:14px}
+  .flavrow .bar{height:6px; border-radius:3px; background:var(--red)}
+  .flavrow .n{font-weight:700; width:44px; text-align:right}
+  .tx{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; margin-bottom:8px;
+  }
+  .tx .top{display:flex; justify-content:space-between; font-weight:800; font-size:13px}
+  .tx .top .t{color:var(--muted); font-weight:700; font-size:11px}
+  .tx .items{color:var(--muted); font-size:12px; margin-top:4px; font-weight:500}
+  .pill{display:inline-block; padding:1px 7px; border-radius:8px; font-size:10px; font-weight:800;
+    background:var(--panel2); border:1px solid var(--line); margin-left:6px}
+  .pill.q{color:#7EC8FF} .pill.c{color:var(--green)} .pill.p{color:#FFB84C}
+  .empty{color:var(--muted); text-align:center; font-weight:700; padding:36px 0}
+  #refreshHint{color:var(--muted); text-align:center; font-size:11px; font-weight:700; padding:16px 0}
+  .skeleton{opacity:.45}
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="logo">AGE.MON<small>DASHBOARD PEMILIK</small></div>
+  <form id="loginForm">
+    <input id="email" type="email" placeholder="Email" autocomplete="username" required>
+    <input id="pass" type="password" placeholder="Password" autocomplete="current-password" required>
+    <div id="loginErr"></div>
+    <button id="loginBtn" type="submit">MASUK</button>
+  </form>
+</div>
+
+<div id="dashView">
+  <div class="topbar">
+    <div class="logo">AGE.MON</div>
+    <button id="logoutBtn">KELUAR</button>
+  </div>
+
+  <div class="datenav">
+    <button id="prevDay">‹</button>
+    <div id="dateLabel"></div>
+    <button id="nextDay">›</button>
+  </div>
+
+  <div class="hero">
+    <small>OMZET</small>
+    <div class="big mono" id="omzet">—</div>
+    <div class="sub" id="txcount"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><small>TUNAI</small><div class="v mono" id="vCash">—</div></div>
+    <div class="card"><small>QRIS</small><div class="v mono" id="vQris">—</div></div>
+    <div class="card"><small>DISKON PROMO</small><div class="v mono" id="vDisc">—</div></div>
+    <div class="card"><small>PCS TERJUAL</small><div class="v mono" id="vPcs">—</div></div>
+  </div>
+
+  <div class="section">TERJUAL PER MENU</div>
+  <div id="flavors"></div>
+
+  <div class="section">TRANSAKSI</div>
+  <div id="txlist"></div>
+  <div id="refreshHint"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://qtfpldyezlxjvlzfzqgn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_o3V_ykWtZ5oSCG_gN68-iQ_iLQe3Apl';
+
+/* ---------- tiny safe storage ---------- */
+const mem = {};
+const store = {
+  get(k){ try{ return localStorage.getItem(k) ?? mem[k] ?? null }catch(e){ return mem[k] ?? null } },
+  set(k,v){ mem[k]=v; try{ localStorage.setItem(k,v) }catch(e){} },
+  del(k){ delete mem[k]; try{ localStorage.removeItem(k) }catch(e){} },
+};
+
+let accessToken = null;
+let viewDate = new Date();           // day being viewed
+let pollTimer = null;
+
+const rp = n => 'Rp ' + (n||0).toLocaleString('id-ID');
+
+/* ---------- auth ---------- */
+async function login(email, password){
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'apikey':SUPABASE_KEY },
+    body: JSON.stringify({ email, password }),
+  });
+  const d = await r.json();
+  if(!r.ok) throw new Error(d.error_description || d.msg || 'Login gagal');
+  accessToken = d.access_token;
+  store.set('agemon_rt', d.refresh_token);
+  return true;
+}
+async function refreshSession(){
+  const rt = store.get('agemon_rt');
+  if(!rt) return false;
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'apikey':SUPABASE_KEY },
+    body: JSON.stringify({ refresh_token: rt }),
+  });
+  if(!r.ok){ store.del('agemon_rt'); return false; }
+  const d = await r.json();
+  accessToken = d.access_token;
+  store.set('agemon_rt', d.refresh_token);
+  return true;
+}
+function logout(){
+  accessToken = null; store.del('agemon_rt');
+  clearInterval(pollTimer);
+  document.getElementById('dashView').style.display='none';
+  document.getElementById('loginView').style.display='flex';
+}
+
+/* ---------- data ---------- */
+function dayRange(d){
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const end = new Date(start); end.setDate(end.getDate()+1);
+  return [start.toISOString(), end.toISOString()];
+}
+async function fetchSales(){
+  const [a,b] = dayRange(viewDate);
+  const url = `${SUPABASE_URL}/rest/v1/sales`
+    + `?select=sale_id,time,items,subtotal,discount,promo,total,method`
+    + `&time=gte.${a}&time=lt.${b}&order=time.desc&limit=500`;
+  const r = await fetch(url, { headers:{
+    'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+accessToken }});
+  if(r.status === 401){                 // token expired mid-session
+    if(await refreshSession()) return fetchSales();
+    logout(); throw new Error('Sesi berakhir');
+  }
+  if(!r.ok) throw new Error('Gagal memuat data');
+  return r.json();
+}
+
+/* ---------- render ---------- */
+function isToday(){ return new Date().toDateString() === viewDate.toDateString(); }
+
+function renderDate(){
+  const opts = { weekday:'long', day:'numeric', month:'long' };
+  document.getElementById('dateLabel').innerHTML =
+    `<small>${isToday() ? 'HARI INI' : viewDate.getFullYear()}</small>` +
+    viewDate.toLocaleDateString('id-ID', opts);
+  document.getElementById('nextDay').disabled = isToday();
+}
+
+function render(sales){
+  const total = sales.reduce((s,x)=>s+x.total,0);
+  const cash  = sales.filter(x=>x.method==='TUNAI').reduce((s,x)=>s+x.total,0);
+  const disc  = sales.reduce((s,x)=>s+(x.discount||0),0);
+  const perFlavor = {};
+  let pcs = 0;
+  sales.forEach(s=>(s.items||[]).forEach(it=>{
+    perFlavor[it.name]=(perFlavor[it.name]||0)+it.qty; pcs+=it.qty;
+  }));
+
+  document.getElementById('omzet').textContent = rp(total);
+  document.getElementById('txcount').textContent =
+    sales.length ? `${sales.length} transaksi` : 'Belum ada transaksi';
+  document.getElementById('vCash').textContent = rp(cash);
+  document.getElementById('vQris').textContent = rp(total-cash);
+  document.getElementById('vDisc').textContent = disc ? '−Rp '+(disc).toLocaleString('id-ID') : 'Rp 0';
+  document.getElementById('vPcs').textContent = pcs;
+
+  const maxQ = Math.max(1, ...Object.values(perFlavor));
+  const fl = Object.entries(perFlavor).sort((a,b)=>b[1]-a[1]).map(([n,q])=>`
+    <div class="flavrow">
+      <span class="name">${n}</span>
+      <span class="bar" style="width:${Math.round(q/maxQ*90)+10}px"></span>
+      <span class="n mono">×${q}</span>
+    </div>`).join('');
+  document.getElementById('flavors').innerHTML = fl || '<div class="empty">Belum ada penjualan.</div>';
+
+  const tx = sales.map(s=>{
+    const t = new Date(s.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    const items = (s.items||[]).map(it=>`${it.name} ×${it.qty}`).join(', ');
+    return `<div class="tx">
+      <div class="top">
+        <span>#${s.sale_id} · ${rp(s.total)}
+          <span class="pill ${s.method==='QRIS'?'q':'c'}">${s.method}</span>
+          ${s.promo?'<span class="pill p">🎁 PROMO</span>':''}
+        </span>
+        <span class="t mono">${t}</span>
+      </div>
+      <div class="items">${items}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('txlist').innerHTML = tx || '<div class="empty">Kosong.</div>';
+  document.getElementById('refreshHint').textContent =
+    isToday() ? 'Diperbarui otomatis tiap 30 detik · ' + new Date().toLocaleTimeString('id-ID') : '';
+}
+
+async function load(){
+  renderDate();
+  document.getElementById('dashView').classList.add('skeleton');
+  try{
+    const sales = await fetchSales();
+    render(sales);
+  }catch(e){
+    document.getElementById('txlist').innerHTML = `<div class="empty">${e.message}</div>`;
+  }
+  document.getElementById('dashView').classList.remove('skeleton');
+}
+
+function startPolling(){
+  clearInterval(pollTimer);
+  pollTimer = setInterval(()=>{ if(isToday()) load(); }, 30000);
+}
+
+/* ---------- wire up ---------- */
+document.getElementById('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn'), err = document.getElementById('loginErr');
+  btn.disabled = true; err.textContent = '';
+  try{
+    await login(document.getElementById('email').value.trim(),
+                document.getElementById('pass').value);
+    showDash();
+  }catch(ex){
+    err.textContent = /invalid/i.test(ex.message) ? 'Email atau password salah' : ex.message;
+  }
+  btn.disabled = false;
+});
+document.getElementById('logoutBtn').addEventListener('click', logout);
+document.getElementById('prevDay').addEventListener('click', ()=>{
+  viewDate.setDate(viewDate.getDate()-1); load();
+});
+document.getElementById('nextDay').addEventListener('click', ()=>{
+  if(!isToday()){ viewDate.setDate(viewDate.getDate()+1); load(); }
+});
+
+function showDash(){
+  document.getElementById('loginView').style.display='none';
+  document.getElementById('dashView').style.display='block';
+  viewDate = new Date();
+  load(); startPolling();
+}
+
+/* auto-login if a session survives */
+(async ()=>{
+  if(await refreshSession()) showDash();
+})();
+</script>
+</body>
+</html>
